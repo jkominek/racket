@@ -19,6 +19,7 @@
          "gc.rkt"
          "image.rkt"
          "panel.rkt"
+         "cgl.rkt"
          "../common/backing-dc.rkt"
          "../common/canvas-mixin.rkt"
          "../common/event.rkt"
@@ -177,37 +178,23 @@
           (when wx
             (queue-window-event wx (lambda () (send wx fix-dc))))))))
 
-(define NSOpenGLPFADoubleBuffer 5)
-(define NSOpenGLPFAStereo 6)
-(define NSOpenGLPFAColorSize 8)
-(define NSOpenGLPFAAlphaSize 11)
-(define NSOpenGLPFADepthSize 12)
-(define NSOpenGLPFAStencilSize 13)
-(define NSOpenGLPFAAccumSize 14)
-(define NSOpenGLPFAOffScreen 53)
-(define NSOpenGLPFASampleBuffers 55)
-(define NSOpenGLPFASamples 56)
-(define NSOpenGLPFAMultisample 59)
-
 (define (gl-config->pixel-format conf)
   (let ([conf (or conf (new gl-config%))])
-    (tell (tell NSOpenGLPixelFormat alloc)
-          initWithAttributes: #:type (_list i _int)
-          (append
-           (if (send conf get-double-buffered) (list NSOpenGLPFADoubleBuffer) null)
-           (if (send conf get-stereo) (list NSOpenGLPFAStereo) null)
-           (list
-            NSOpenGLPFADepthSize (send conf get-depth-size)
-            NSOpenGLPFAStencilSize (send conf get-stencil-size)
-            NSOpenGLPFAAccumSize (send conf get-accum-size))
-           (let ([ms (send conf get-multisample-size)])
-             (if (zero? ms)
-                 null
-                 (list NSOpenGLPFAMultisample
-                       NSOpenGLPFASampleBuffers 1
-                       NSOpenGLPFASamples ms)))
-           (list 0)))))
-        
+    (CGLChoosePixelFormat
+     (append (list CGLPFAColorSize 24
+                   CGLPFAAlphaSize 8
+                   CGLPFADepthSize (send conf get-depth-size)
+                   CGLPFAStencilSize (send conf get-stencil-size)
+                   CGLPFAAccumSize (send conf get-accum-size))
+             (if (send conf get-double-buffered) (list CGLPFADoubleBuffer) null)
+             (if (send conf get-stereo) (list CGLPFAStereo) null)
+             (let ([ms (send conf get-multisample-size)])
+               (if (zero? ms)
+                   null
+                   (list CGLPFAMultisample
+                         CGLPFASampleBuffers 1
+                         CGLPFASamples ms)))
+             (list 0)))))
   
 (define-struct scroller (cocoa [range #:mutable] [page #:mutable]))
 (define scroll-width (tell #:type _CGFloat NSScroller scrollerWidth))
@@ -373,22 +360,21 @@
                     initWithFrame: #:type _NSRect r)
               (let* ([share-context (and gl-config (send gl-config get-share-context))]
                      [context-handle (and share-context (send share-context get-handle))]
-                     [pf (gl-config->pixel-format gl-config)]
-                     [new-context (and
-                                   context-handle
-                                   (tell (tell NSOpenGLContext alloc)
-                                         initWithFormat: pf
-                                         shareContext: context-handle))]
+                     [cgl-pf (gl-config->pixel-format gl-config)]
+                     [ns-pf (tell (tell NSOpenGLPixelFormat alloc)
+                                  initWithCGLPixelFormatObj: #:type _pointer cgl-pf)]
+                     [cgl-context (CGLCreateContext cgl-pf context-handle)]
+                     [ns-context (tell (tell NSOpenGLContext alloc)
+                                       initWithCGLContextObj: #:type _pointer cgl-context)]
                      [gl-view (tell (tell RacketGLView alloc)
                                     initWithFrame: #:type _NSRect r
-                                    pixelFormat: pf)])
-                (when new-context
-                  (tellv gl-view setOpenGLContext: new-context)
-                  ;; We're supposed to sync via `setView:' but it fails,
-                  ;; perhaps because the view isn't yet visible:
-                  ;;   (tellv new-context setView: gl-view)
-                  (tellv new-context release))
-                (tellv pf release)
+                                    pixelFormat: ns-pf)])
+                (tellv gl-view setOpenGLContext: ns-context)
+                ;; We're supposed to sync via `setView:' but it fails,
+                ;; perhaps because the view isn't yet visible:
+                ;;   (tellv ns-context setView: gl-view)
+                (tellv ns-context release)
+                (tellv ns-pf release)
                 gl-view)))))
      (tell #:type _void cocoa addSubview: content-cocoa)
      (set-ivar! content-cocoa wxb (->wxb this))

@@ -84,13 +84,14 @@ pointer represents depends on the platform:
 
 @itemize[
 @item{Windows: @tt{HGLRC}}
-@item{Mac OS X: @tt{NSOpenGLContext}}
+@item{Mac OS X: @tt{CGLContextObj}}
 @item{Unix: @tt{GdkGLContext}}
 ]
 
 Note that these values are not necessary the most ``low-level'' context objects,
-but are instead the ones useful to Racket. A @tt{NSOpenGLContext} wraps a
-@tt{CGLContextObj}, and a @tt{GdkGLContext} contains a @tt{GLXcontext}.
+but are instead represent a platform-specific attempt to choose the most useful
+object. On Mac OS X, a @tt{NSOpenGLContext} can be created from
+@tt{CGLContextObj}, and on Linux, @tt{GdkGLContext} contains a @tt{GLXcontext}.
 }
 
 @defmethod[(ok?)
