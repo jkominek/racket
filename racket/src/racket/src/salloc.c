@@ -470,6 +470,19 @@ void scheme_dont_gc_ptr(void *p)
   dgc_count[oldsize] = 1;
 }
 
+int scheme_dont_gc_count(void *p)
+{
+  int i;
+
+  for (i = 0; i < dgc_size; i++) {
+    if (dgc_array[i] == p) {
+      return dgc_count[i];
+    }
+  }
+
+  return 0;
+}
+
 void scheme_gc_ptr_ok(void *p)
 {
   int i;

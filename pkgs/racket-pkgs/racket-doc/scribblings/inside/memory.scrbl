@@ -1054,6 +1054,12 @@ This function keeps a reference count on the pointers it registers, so
  two calls to @cppi{scheme_dont_gc_ptr} for the same @var{p} should
  be balanced with two calls to @cpp{scheme_gc_ptr_ok}.}
 
+@function[(int scheme_dont_gc_count
+           [void* p])]{
+
+Returns the current value of the reference count maintained by
+@cpp{scheme_dont_gc_ptr} and @cpp{scheme_gc_ptr_ok}.}
+
 @function[(void scheme_gc_ptr_ok
            [void* p])]{
 

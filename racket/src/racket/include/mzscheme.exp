@@ -204,6 +204,7 @@ scheme_add_scheme_finalizer_once
 scheme_register_finalizer
 scheme_remove_all_finalization
 scheme_dont_gc_ptr
+scheme_dont_gc_count
 scheme_gc_ptr_ok
 scheme_collect_garbage
 GC_register_traversers

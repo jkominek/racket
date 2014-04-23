@@ -258,6 +258,7 @@
   scheme_extension_table->scheme_register_finalizer = scheme_register_finalizer;
   scheme_extension_table->scheme_remove_all_finalization = scheme_remove_all_finalization;
   scheme_extension_table->scheme_dont_gc_ptr = scheme_dont_gc_ptr;
+  scheme_extension_table->scheme_dont_gc_count = scheme_dont_gc_count;
   scheme_extension_table->scheme_gc_ptr_ok = scheme_gc_ptr_ok;
   scheme_extension_table->scheme_collect_garbage = scheme_collect_garbage;
   scheme_extension_table->scheme_enable_garbage_collection = scheme_enable_garbage_collection;

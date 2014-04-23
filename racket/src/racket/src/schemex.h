@@ -355,6 +355,7 @@ void (*scheme_register_finalizer)(void *p,
 					 void **olddata);
 void (*scheme_remove_all_finalization)(void *p);
 void (*scheme_dont_gc_ptr)(void *p);
+int (*scheme_dont_gc_count)(void *p);
 void (*scheme_gc_ptr_ok)(void *p);
 void (*scheme_collect_garbage)(void);
 void (*scheme_enable_garbage_collection)(int on);

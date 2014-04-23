@@ -220,6 +220,7 @@ EXPORTS
  scheme_register_finalizer
  scheme_remove_all_finalization
  scheme_dont_gc_ptr
+ scheme_dont_gc_count
  scheme_gc_ptr_ok
  scheme_collect_garbage
  scheme_enable_garbage_collection

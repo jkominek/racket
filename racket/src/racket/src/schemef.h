@@ -455,6 +455,7 @@ MZ_EXTERN void scheme_register_finalizer(void *p,
 MZ_EXTERN void scheme_remove_all_finalization(void *p);
 
 MZ_EXTERN void scheme_dont_gc_ptr(void *p);
+MZ_EXTERN int scheme_dont_gc_count(void *p);
 MZ_EXTERN void scheme_gc_ptr_ok(void *p);
 
 MZ_EXTERN void scheme_collect_garbage(void);
