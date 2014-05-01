@@ -11,12 +11,15 @@
          "private/count-bits-in-fixnum.rkt")
 
 (define bits-in-a-word 8)
+(define bits-in-a-word-mask 7)
+(define neg-log2-bits-in-a-word -3)
 
 (define largest-word
   (- (expt 2 bits-in-a-word) 1))
 
 (define (make-bit-vector size [fill #f])
-  (define-values (q r) (quotient/remainder size bits-in-a-word))
+  (define q (arithmetic-shift size neg-log2-bits-in-a-word))
+  (define r (bitwise-and size bits-in-a-word-mask))
   (define word-size (+ q (if (zero? r) 0 1)))
   (define words (make-bytes word-size (if fill largest-word 0)))  
   (when (and fill (not (zero? r))) 
@@ -46,7 +49,8 @@
                [else default])]))
 
 (define (unsafe-bit-vector-ref bv n)
-  (define-values (wi bi) (quotient/remainder n bits-in-a-word))
+  (define wi (arithmetic-shift n neg-log2-bits-in-a-word))
+  (define bi (bitwise-and n bits-in-a-word-mask))
   (match bv
     [(struct bit-vector (words size))
      (define word (bytes-ref words wi))
@@ -68,7 +72,8 @@
   (bit-vector-ref bv key))
 
 (define (bit-vector-set! bv n b)
-  (define-values (wi bi) (quotient/remainder n bits-in-a-word))
+  (define wi (arithmetic-shift n neg-log2-bits-in-a-word))
+  (define bi (bitwise-and n bits-in-a-word-mask))
   (match bv
     [(struct bit-vector (words size))
      (define word (bytes-ref words wi))
@@ -148,8 +153,6 @@
   bit-vector-copy
   #f)
 
-; A bit vector is represented as a vector of words.
-; Each word contains 30 or 62 bits depending on the size of a fixnum.
 (serializable-struct bit-vector (words size)
   ; words     is the bytes of words
   ; size      is the number of bits in bitvector
