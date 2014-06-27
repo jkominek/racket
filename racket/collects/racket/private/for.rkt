@@ -1280,6 +1280,21 @@
       [(_ [orig-stx . _] fold-bind () . rest)
        (raise-syntax-error
         #f "bad syntax (illegal use of `.') after sequence bindings" #'orig-stx)]
+      ;; Escape continuation case, no pending emits:
+      [(_ [orig-stx nested? #f ()] ([fold-var fold-init] ...) (#:ec ec-var . rest) . body)
+       (with-syntax ([(actual-ec) (generate-temporaries #'(ec-var))]
+                     [(passthrough-args ...) (generate-temporaries #'(fold-var ...))])
+         #'(let ([fold-var fold-init] ...)
+             (let/ec actual-ec
+               (let ([ec-var (case-lambda [() (actual-ec fold-var ...)]
+                                          [(passthrough-args ...) (actual-ec passthrough-args ...)])])
+                 (for/foldX/derived [orig-stx nested? #f ()]
+				    ([fold-var fold-var] ...) rest . body)))))]
+      ;; Escape continuation case, pending emits need to be flushed first
+      [(frm [orig-stx nested? #f binds] ([fold-var fold-init] ...)
+           (#:ec ec-var . rest) . body)
+       #'(frm [orig-stx nested? #t binds] ([fold-var fold-init] ...)
+             (#:ec ec-var . rest) . body)]
       ;; Guard case, no pending emits:
       [(_ [orig-stx nested? #f ()] ([fold-var fold-init] ...) (#:when expr . rest) . body)
        #'(let ([fold-var fold-init] ...)
@@ -1464,7 +1479,7 @@
                                  (cons #`[ids #,(rhs-wrap #'rhs)]
                                        (loop (cdr bs)))]
                                 [kw
-                                 (memq (syntax-e #'kw) '(#:when #:unless #:break #:final))
+                                 (memq (syntax-e #'kw) '(#:ec #:when #:unless #:break #:final))
                                  (cons (car bs)
                                        (if (null? (cdr bs))
                                            null
